@@ -18,6 +18,15 @@ Video Input
 → Risk Assessment
 → Prevention & Management
 
+## Detection Data Interface
+
+The Person Detection module produces detection data for the Tracking module.
+
+### Current Detection Output
+
+CSV file:
+frame,x1,y1,x2,y2,confidence
+
 ## Module Responsibilities
 
 ### 1. Person Detection
