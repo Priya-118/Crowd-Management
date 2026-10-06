@@ -1,0 +1,7 @@
+# Member 3 generated files
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+crowd_prediction/outputs/dataset/
+crowd_prediction/outputs/convlstm/*.pt
