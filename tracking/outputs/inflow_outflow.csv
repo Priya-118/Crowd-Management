@@ -1,0 +1,3 @@
+frame,zone,inflow,outflow,net_flow
+5,Zone_A,1,0,1
+5,Zone_C,0,1,-1
