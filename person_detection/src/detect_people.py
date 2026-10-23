@@ -26,7 +26,7 @@ print("Loading YOLOv5...")
 model = torch.hub.load(
     str(YOLOV5_DIR),
     "custom",
-    path=MODEL_PATH,d
+    path=MODEL_PATH,
     source="local"
 )
 
