@@ -19,16 +19,14 @@ OUTPUT_PATH = BASE_DIR / "output" / "detected_test.mp4"
 CSV_PATH = BASE_DIR / "output" / "detections.csv"
 
 
-# -----------------------------
-# Load YOLOv5
-# -----------------------------
+
 
 print("Loading YOLOv5...")
 
 model = torch.hub.load(
     str(YOLOV5_DIR),
     "custom",
-    path=MODEL_PATH,
+    path=MODEL_PATH,d
     source="local"
 )
 
