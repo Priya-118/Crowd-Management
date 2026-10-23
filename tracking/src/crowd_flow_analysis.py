@@ -21,7 +21,9 @@ def main():
     # -----------------------------------
     # 2. Number of moving people
     # -----------------------------------
-    moving = movement[movement["direction"] != "START"].copy()
+    moving = movement[
+    ~movement["direction"].isin(["START", "STATIONARY"])
+].copy()
 
     moving_people = (
         moving.groupby("frame")["track_id"]
