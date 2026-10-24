@@ -1,3 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Generated outputs
+output/
+runs/
+
+# YOLOv5 local repository
+yolov5/
+
+# Model weights
+*.pt
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Python virtual environment
 .venv/
