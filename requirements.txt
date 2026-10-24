@@ -1,0 +1,3 @@
+pandas
+numpy
+supervision==0.30.8

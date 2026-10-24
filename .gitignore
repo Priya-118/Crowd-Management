@@ -1,0 +1,10 @@
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Generated pipeline outputs
+tracking/outputs/
