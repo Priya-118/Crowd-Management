@@ -112,6 +112,7 @@ def main():
         columns=OUTPUT_COLUMNS
     )
 
+    Path(OUTPUT_CSV).parent.mkdir(parents=True, exist_ok=True)
     output_df.to_csv(OUTPUT_CSV, index=False)
 
     print("Tracking completed.")

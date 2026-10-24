@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import sys
+from pathlib import Path
 
 SCRIPTS = [
     "tracking/src/tracker.py",
@@ -17,6 +18,8 @@ SCRIPTS = [
 
 
 def main():
+    Path("tracking/outputs").mkdir(parents=True, exist_ok=True)
+    
     parser = argparse.ArgumentParser(
         description="Run the crowd tracking and flow pipeline."
     )
