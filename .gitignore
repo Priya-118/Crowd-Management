@@ -1,7 +1,38 @@
-# Member 3 generated files
-venv/
+# Python cache files
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+
+# Member 3 generated dataset files
 crowd_prediction/outputs/dataset/
+
+# Generated ConvLSTM model files
 crowd_prediction/outputs/convlstm/*.pt
+
+# Generated outputs
+output/
+runs/
+tracking/outputs/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# YOLOv5 local repository
+yolov5/
+
+# Model weights
+*.pt
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
