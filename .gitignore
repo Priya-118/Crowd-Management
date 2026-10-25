@@ -1,20 +1,28 @@
-# Python
+# Python cache files
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
-# Virtual environment
+# Virtual environments
 venv/
 .venv/
 
-# Videos
-*.mp4
-*.avi
-*.mov
-*.mkv
+# Member 3 generated dataset files
+crowd_prediction/outputs/dataset/
+
+# Generated ConvLSTM model files
+crowd_prediction/outputs/convlstm/*.pt
 
 # Generated outputs
 output/
 runs/
+tracking/outputs/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
 
 # YOLOv5 local repository
 yolov5/
@@ -28,13 +36,3 @@ yolov5/
 # OS
 .DS_Store
 Thumbs.db
-
-# Python virtual environment
-.venv/
-
-# Python cache files
-__pycache__/
-*.py[cod]
-
-# Generated pipeline outputs
-tracking/outputs/
