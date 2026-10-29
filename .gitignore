@@ -38,3 +38,22 @@ __pycache__/
 
 # Generated pipeline outputs
 tracking/outputs/
+
+# Backend runtime storage and database
+backend/storage/
+*.db
+*.sqlite
+*.sqlite3
+.pytest_cache/
+
+# Frontend dependencies and build outputs
+frontend/node_modules/
+frontend/dist/
+
+
+.venv-yolo/
+__pycache__/
+.pytest_cache/
+.env
+
+

@@ -1,11 +1,11 @@
+import argparse
+import csv
+from pathlib import Path
 import cv2
 import torch
-import csv
-
-from pathlib import Path
 
 # -----------------------------
-# Paths
+# Default Paths (Backward Compatible)
 # -----------------------------
 
 # person_detection/
@@ -19,211 +19,237 @@ OUTPUT_PATH = BASE_DIR / "output" / "detected_test.mp4"
 CSV_PATH = BASE_DIR / "output" / "detections.csv"
 
 
+def run_detection(
+    video_path=VIDEO_PATH,
+    output_video_path=OUTPUT_PATH,
+    output_csv_path=CSV_PATH,
+    yolov5_dir=YOLOV5_DIR,
+    model_path=MODEL_PATH,
+):
+    """
+    Detect people in video frames using YOLOv5 and output both an annotated video
+    and a detection CSV (frame, x1, y1, x2, y2, confidence).
+    """
+    video_path = Path(video_path)
+    output_video_path = Path(output_video_path)
+    output_csv_path = Path(output_csv_path)
+    yolov5_dir = Path(yolov5_dir)
+    model_path = Path(model_path)
 
+    # Ensure parent output directories exist
+    output_video_path.parent.mkdir(parents=True, exist_ok=True)
+    output_csv_path.parent.mkdir(parents=True, exist_ok=True)
 
-print("Loading YOLOv5...")
+    print("Loading YOLOv5...")
 
-model = torch.hub.load(
-    str(YOLOV5_DIR),
-    "custom",
-    path=MODEL_PATH,
-    source="local"
-)
+    model = torch.hub.load(
+        str(yolov5_dir),
+        "custom",
+        path=str(model_path),
+        source="local"
+    )
 
-# Class 0 = person
-model.classes = [0]
+    # Class 0 = person
+    model.classes = [0]
 
-print("Model loaded.")
+    print("Model loaded.")
 
+    # -----------------------------
+    # Open input video
+    # -----------------------------
 
-# -----------------------------
-# Open input video
-# -----------------------------
+    cap = cv2.VideoCapture(str(video_path))
 
-cap = cv2.VideoCapture(VIDEO_PATH)
+    if not cap.isOpened():
+        print(f"Error: Could not open video: {video_path}")
+        return False
 
-if not cap.isOpened():
-    print("Error: Could not open video.")
-    exit()
+    # Get video properties
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if not fps or fps <= 0:
+        fps = 30.0
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-# Get video properties
-fps = cap.get(cv2.CAP_PROP_FPS)
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    print("FPS:", fps)
+    print("Width:", width)
+    print("Height:", height)
+    print("Total frames:", total_frames)
 
-print("FPS:", fps)
-print("Width:", width)
-print("Height:", height)
-print("Total frames:", total_frames)
+    # -----------------------------
+    # Create output video
+    # -----------------------------
 
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-# -----------------------------
-# Create output video
-# -----------------------------
+    out = cv2.VideoWriter(
+        str(output_video_path),
+        fourcc,
+        fps,
+        (width, height)
+    )
 
-fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    if not out.isOpened():
+        print("Error: Could not create output video.")
+        cap.release()
+        return False
 
-out = cv2.VideoWriter(
-    OUTPUT_PATH,
-    fourcc,
-    fps,
-    (width, height)
-)
+    # -----------------------------
+    # Create CSV file
+    # -----------------------------
 
-if not out.isOpened():
-    print("Error: Could not create output video.")
-    cap.release()
-    exit()
+    csv_file = open(str(output_csv_path), "w", newline="")
+    csv_writer = csv.writer(csv_file)
 
+    csv_writer.writerow([
+        "frame",
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "confidence"
+    ])
 
-# -----------------------------
-# Create CSV file
-# -----------------------------
+    # -----------------------------
+    # Process entire video
+    # -----------------------------
 
-csv_file = open(CSV_PATH, "w", newline="")
-csv_writer = csv.writer(csv_file)
+    frame_number = 0
 
-csv_writer.writerow([
-    "frame",
-    "x1",
-    "y1",
-    "x2",
-    "y2",
-    "confidence"
-])
+    while True:
+        ret, frame = cap.read()
 
+        # Stop when video ends
+        if not ret:
+            break
 
-# -----------------------------
-# Process entire video
-# -----------------------------
+        frame_number += 1
 
-frame_number = 0
+        # -------------------------
+        # Run YOLOv5
+        # -------------------------
 
-while True:
+        results = model(frame)
 
-    ret, frame = cap.read()
+        # Get detections
+        detections = results.xyxy[0]
 
-    # Stop when video ends
-    if not ret:
-        break
+        person_count = len(detections)
 
-    frame_number += 1
+        # -------------------------
+        # Process detections
+        # -------------------------
 
-    # -------------------------
-    # Run YOLOv5
-    # -------------------------
+        for detection in detections:
+            x1, y1, x2, y2, confidence, class_id = detection.tolist()
 
-    results = model(frame)
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
 
-    # Get detections
-    detections = results.xyxy[0]
+            confidence = float(confidence)
 
-    person_count = len(detections)
+            # Save detection information
+            csv_writer.writerow([
+                frame_number,
+                x1,
+                y1,
+                x2,
+                y2,
+                round(confidence, 4)
+            ])
 
+            # Draw bounding box
+            cv2.rectangle(
+                frame,
+                (x1, y1),
+                (x2, y2),
+                (0, 255, 0),
+                2
+            )
 
-    # -------------------------
-    # Process detections
-    # -------------------------
+            # Person label
+            label = f"Person {confidence:.2f}"
 
-    for detection in detections:
+            cv2.putText(
+                frame,
+                label,
+                (x1, y1 - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2
+            )
 
-        x1, y1, x2, y2, confidence, class_id = detection.tolist()
-
-        x1 = int(x1)
-        y1 = int(y1)
-        x2 = int(x2)
-        y2 = int(y2)
-
-        confidence = float(confidence)
-
-
-        # Save detection information
-        csv_writer.writerow([
-            frame_number,
-            x1,
-            y1,
-            x2,
-            y2,
-            round(confidence, 4)
-        ])
-
-
-        # Draw bounding box
-        cv2.rectangle(
-            frame,
-            (x1, y1),
-            (x2, y2),
-            (0, 255, 0),
-            2
-        )
-
-
-        # Person label
-        label = f"Person {confidence:.2f}"
+        # -------------------------
+        # Display person count
+        # -------------------------
 
         cv2.putText(
             frame,
-            label,
-            (x1, y1 - 10),
+            f"Persons: {person_count}",
+            (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
+            1,
+            (0, 255, 255),
             2
         )
 
+        # -------------------------
+        # Save processed frame
+        # -------------------------
 
-    # -------------------------
-    # Display person count
-    # -------------------------
+        out.write(frame)
 
-    cv2.putText(
-        frame,
-        f"Persons: {person_count}",
-        (20, 40),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 255, 255),
-        2
+        # -------------------------
+        # Progress
+        # -------------------------
+
+        print(
+            f"Frame {frame_number}/{total_frames}: "
+            f"{person_count} persons detected"
+        )
+
+    # -----------------------------
+    # Release resources
+    # -----------------------------
+
+    cap.release()
+    out.release()
+    csv_file.close()
+
+    # -----------------------------
+    # Completion message
+    # -----------------------------
+
+    print()
+    print("Detection completed.")
+    print("Frames processed:", frame_number)
+    print("Output video saved to:")
+    print(output_video_path)
+    print("Detection CSV saved to:")
+    print(output_csv_path)
+    return True
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Detect people in video using YOLOv5")
+    parser.add_argument("--input", default=str(VIDEO_PATH), help="Path to input video")
+    parser.add_argument("--output-video", default=str(OUTPUT_PATH), help="Path to output video")
+    parser.add_argument("--output-csv", default=str(CSV_PATH), help="Path to output CSV")
+    parser.add_argument("--yolov5-dir", default=str(YOLOV5_DIR), help="Path to local YOLOv5 repo")
+    parser.add_argument("--weights", default=str(MODEL_PATH), help="Path to YOLOv5 model weights")
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    run_detection(
+        video_path=args.input,
+        output_video_path=args.output_video,
+        output_csv_path=args.output_csv,
+        yolov5_dir=args.yolov5_dir,
+        model_path=args.weights,
     )
-
-
-    # -------------------------
-    # Save processed frame
-    # -------------------------
-
-    out.write(frame)
-
-
-    # -------------------------
-    # Progress
-    # -------------------------
-
-    print(
-        f"Frame {frame_number}/{total_frames}: "
-        f"{person_count} persons detected"
-    )
-
-
-# -----------------------------
-# Release resources
-# -----------------------------
-
-cap.release()
-out.release()
-csv_file.close()
-
-
-# -----------------------------
-# Completion message
-# -----------------------------
-
-print()
-print("Detection completed.")
-print("Frames processed:", frame_number)
-
-print("Output video saved to:")
-print(OUTPUT_PATH)
-
-print("Detection CSV saved to:")
-print(CSV_PATH)
